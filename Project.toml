@@ -1,0 +1,11 @@
+name = "ReSeis"
+uuid = "23951642-236d-11e9-28fe-4192d2a02bea"
+authors = ["Riyad Muradov <rmuradov@stanford.edu>"]
+version = "0.1.0"
+
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+GaussianMixtures = "cc18c42c-b769-54ff-9e2a-b28141a64aae"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
