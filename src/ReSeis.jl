@@ -18,7 +18,10 @@ export
     getreals,
     realcount,
     labels,
-    ricker,
-    synthetic
 
+    # seismic related
+    ricker,
+    synthetic,
+    sampleresponse,
+    d2t
 end

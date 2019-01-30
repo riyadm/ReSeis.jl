@@ -1,5 +1,5 @@
-function simkennet(lyr::Dict{Symbol, Vector{Float64}}; wavelet::Vector=nothing, dt::Float64=1e-3, 
-        propnames::Vector{Symbol}=[:rho, :vp, :thickness], mopt::Int64=0, fs::Int64=0)
+function simkennet(lyr::Dict{Symbol,Vector}; wavelet::Vector=nothing, dt::Float64=1e-3, 
+        propnames::Vector{Symbol}=[:rho, :vp, :dh], mopt::Int64=2, fs::Int64=0)
     
     @assert all(haskey(lyr, key) for key in propnames) "Property name not found!"
     @assert wavelet != nothing "No wavelet provided!"
@@ -7,7 +7,7 @@ function simkennet(lyr::Dict{Symbol, Vector{Float64}}; wavelet::Vector=nothing, 
     
     ρ = lyr[:rho]
     vₚ = lyr[:vp]
-    d = lyr[:thickness]
+    d = lyr[:dh]
     
     nlr = length(ρ)
     n = length(wavelet)
@@ -33,10 +33,9 @@ function simkennet(lyr::Dict{Symbol, Vector{Float64}}; wavelet::Vector=nothing, 
     end
     
     ru = .- rd
-    #tu = td
+    # tu = td
     
     for j=nlr:-1:1
-        nlr, d[j], vₚ[j], om
         ed = exp.((d[j]/vₚ[j])*im*om)
         
         if mopt == 0
@@ -74,10 +73,10 @@ function ricker(f₀::Float64, Δt::Float64)
     @assert Δt > 0 "Time interval Δt must be positive!"
     
     # signal length
-    length = 2.0 / f₀   
+    length = 2.0 / f₀ / Δt
     
     # number of points in each direction
-    n = floor(Int, length / Δt / 2)
+    n = floor(Int, length / 2)
     
     # time axis
     t = Δt * (-n:n)
@@ -87,18 +86,34 @@ function ricker(f₀::Float64, Δt::Float64)
     A = (1 .- 2x) .* exp.(-x)
 end
 
-function synthetic(lyr::Dict{Symbol,Vector}; midcut=true, kwargs...)
-    s = simkennet(lyr, kwargs...)
+function synthetic(lyr::Dict{Symbol,Vector}; kwargs...)
+    s = simkennet(lyr; kwargs...)
 end
 
-function synthetic(lyr::Vararg{Dict{Symbol,Vector}}; kwargs...)
-    stacked = Dict()
-    for l in lyr
-        for key in keys(l)
-            properties = getindex.(l, key)
-            stacked[key] = vcat(properties...)
-        end
-    end
-    
-    s = synthetic(stacked, kwargs...)
+function synthetic(lyr::Vector{Dict{Symbol,Vector}}; kwargs...)
+    stacked = stacklayers(lyr)
+    s = synthetic(stacked; kwargs...)
 end
+
+function stacklayers(lyr::Vector{Dict{Symbol,Vector}})
+    stacked = eltype(lyr)()
+    
+    for key in keys(first(lyr))
+        properties = getindex.(lyr, key)
+        stacked[key] = vcat(properties...)
+    end
+    stacked
+end
+
+function d2t(lyr::Dict{Symbol,Vector})
+    vₚ = lyr[:vp]
+    d = lyr[:dh]
+    t = cumsum(2d ./ vₚ)
+    pushfirst!(t,0)
+end
+
+function d2t(lyr::Vector{Dict{Symbol,Vector}})
+    stacked = stacklayers(lyr)
+    d2t(stacked)
+end
+        
