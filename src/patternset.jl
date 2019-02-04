@@ -32,6 +32,7 @@ function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64;
     end
     
     patterns = [EmpiricalPattern(seq, props, δh) for (seq, props) in sequences]
+    @show typeof(patterns[1].properties)
     counts = realcount.(patterns)
     
     # sort patterns in descending order of realization counts
@@ -45,6 +46,8 @@ function patternset(data::DataFrame, gmm::GMM, w::Int64, s::Int64; kwargs...)
         patternset(data, distributions, w, s; kwargs...)
 end
 
+patterns(pset::PatternSet) = pset.patterns
+
 function sample(pset::PatternSet; weighted=false)
     sample(pset.patterns) # TODO: weighted by frequency
 end
@@ -52,26 +55,34 @@ end
 sample(pset::PatternSet, n::Int64) = [sample(pset) for _=1:n]
 
 function sampleresponse(pset::PatternSet, n=3; cut=2, kwargs...)
-    @assert cut <= n "Pattern to cut doesn't exist."
+    @assert 0 <= cut <= n "Pattern to cut doesn't exist."
+    @assert in(:dt, keys(kwargs)) "Keyword argument dt missing."
     
     # sample n patterns from the set
     patterns = sample(pset, n)
     
     # sample property realizations for each pattern
     properties = sample.(patterns)
-
+    
+    @show mean([mean(p[:vp]) for p in properties])
+    @show mean(properties[cut][:vp])
+    # compute synthetic seismogram
     s = synthetic(properties; kwargs...)
-    t = d2t(properties)
     
-    # indices to cut
-    len = length(first(values(first(properties)))) # TODO: Add length to pattern object or find a better solution to this
-    start = (cut-1)*len
-    stop = cut*len + 1
-    dt = kwargs[:dt]
-    t_s = collect(dt*(0:(length(s)-1)))
-    @show length(t_s), length(s)
-    response = s[(t_s .> t[start]) .& (t_s .< t[stop])]
-    
+    if cut > 0
+        t = d2t(properties)
+        
+        # indices to cut
+        len = length(first(values(first(properties)))) # TODO: Add length to pattern object or find a better solution to this
+        start = (cut-1)*len
+        stop = cut*len + 1
+        dt = kwargs[:dt]
+        t_s = dt*(0:(length(s)-1))
+        idx = (t_s .>= t[start]) .& (t_s .<= t[stop])
+        response = s[idx]
+    else
+        s
+    end    
 end
 
 function seqcounts(labels::Vector)

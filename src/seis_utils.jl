@@ -1,8 +1,8 @@
-function simkennet(lyr::Dict{Symbol,Vector}; wavelet::Vector=nothing, dt::Float64=1e-3, 
+function simkennet(lyr::Dict{Symbol,Vector{Float64}}; wavelet::Vector=[], dt::Float64=1e-3, 
         propnames::Vector{Symbol}=[:rho, :vp, :dh], mopt::Int64=2, fs::Int64=0)
     
-    @assert all(haskey(lyr, key) for key in propnames) "Property name not found!"
-    @assert wavelet != nothing "No wavelet provided!"
+    @assert all(haskey(lyr, key) for key in propnames) "Property name not found."
+    @assert wavelet != nothing "No wavelet provided."
     
     
     ρ = lyr[:rho]
@@ -68,34 +68,16 @@ function simkennet(lyr::Dict{Symbol,Vector}; wavelet::Vector=nothing, dt::Float6
     wz = real(fft(wz))
 end
 
-function ricker(f₀::Float64, Δt::Float64)
-    @assert f₀ > 0 "Center frequency f₀ must be positive!"
-    @assert Δt > 0 "Time interval Δt must be positive!"
-    
-    # signal length
-    length = 2.0 / f₀ / Δt
-    
-    # number of points in each direction
-    n = floor(Int, length / 2)
-    
-    # time axis
-    t = Δt * (-n:n)
-    
-    # amplitude
-    x = (π * f₀ * t) .^ 2
-    A = (1 .- 2x) .* exp.(-x)
-end
-
-function synthetic(lyr::Dict{Symbol,Vector}; kwargs...)
+function synthetic(lyr::Dict{Symbol,Vector{Float64}}; kwargs...)
     s = simkennet(lyr; kwargs...)
 end
 
-function synthetic(lyr::Vector{Dict{Symbol,Vector}}; kwargs...)
+function synthetic(lyr::Vector{Dict{Symbol,Vector{Float64}}}; kwargs...)
     stacked = stacklayers(lyr)
     s = synthetic(stacked; kwargs...)
 end
 
-function stacklayers(lyr::Vector{Dict{Symbol,Vector}})
+function stacklayers(lyr::Vector{Dict{Symbol,Vector{Float64}}})
     stacked = eltype(lyr)()
     
     for key in keys(first(lyr))
@@ -105,14 +87,33 @@ function stacklayers(lyr::Vector{Dict{Symbol,Vector}})
     stacked
 end
 
-function d2t(lyr::Dict{Symbol,Vector})
+
+function ricker(f₀::Float64, Δt::Float64)
+    @assert f₀ > 0 "Peak frequency f₀ must be positive!"
+    @assert Δt > 0 "Time interval Δt must be positive!"
+    
+    # signal length
+    length = 2.0 / f₀ / Δt
+    
+    # number of points in each direction
+    n = ceil(Int, length / 2)
+    
+    # time axis
+    t = Δt * (-n:n)
+    
+    # amplitude
+    x = (π * f₀ * t) .^ 2
+    A = (1 .- 2x) .* exp.(-x)
+end
+
+function d2t(lyr::Dict{Symbol,Vector{Float64}})
     vₚ = lyr[:vp]
     d = lyr[:dh]
     t = cumsum(2d ./ vₚ)
     pushfirst!(t,0)
 end
 
-function d2t(lyr::Vector{Dict{Symbol,Vector}})
+function d2t(lyr::Vector{Dict{Symbol,Vector{Float64}}})
     stacked = stacklayers(lyr)
     d2t(stacked)
 end

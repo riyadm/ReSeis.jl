@@ -1,6 +1,6 @@
 struct EmpiricalPattern <: AbstractPattern
     labels::Vector{Real}
-    properties::Vector{Dict{Symbol, Vector}}
+    properties::Vector{Dict{Symbol, Vector{Float64}}}
     δh::Float64
 end
 
@@ -12,8 +12,7 @@ function getreals(pattern::EmpiricalPattern, name::Symbol)
 end
 
 function sample(pattern::EmpiricalPattern) 
-    sample(pattern.properties)
-    
+    sample(properties(pattern))
 end
 
 sample(pattern::EmpiricalPattern, n::Int64) = [sample(pattern) for _=1:n]
