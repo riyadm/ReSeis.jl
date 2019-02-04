@@ -1,2 +1,2 @@
 # ReSeis.jl
-Probabilistic seismic inversion workflows in Julia
+Probabilistic seismic inversion workflows in Julia. Under development.
