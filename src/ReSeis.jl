@@ -26,8 +26,9 @@ export
     labels,
 
     # seismic related
+    Kennet,
     ricker,
     synthetic,
     sampleresponse,
-    d2t
+    d2t    
 end
