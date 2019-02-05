@@ -19,3 +19,14 @@ end
 (sim::Kennet)(p::AbstractPattern) = sim(sample(p))
 (sim::Kennet)(ps::Vector{<:AbstractPattern}) = sim.(ps)
 (sim::Kennet)(pset::PatternSet) = sim(sample(pset))
+
+function Base.show(io::IO, sim::Kennet)
+    print(io, "Kennet($sim.varnames)")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", sim::Kennet)
+    println(io, "  Sampling rate Δt:  ", sim.dt, " s")
+    println(io, "  Variables:         ", sim.varnames)
+    println(io, "  Multiples order:   ", sim.mopt) 
+    println(io, "  Wavelet length:    ", length(sim.wavelet), " points")
+end
