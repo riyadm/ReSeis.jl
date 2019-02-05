@@ -47,6 +47,7 @@ end
 
 patterns(pset::PatternSet) = pset.patterns
 Base.size(pset::PatternSet) = length(pset.patterns)
+Base.getindex(pset::PatternSet, i::Int64) = getindex(pset.patterns, i)
 
 function sample(pset::PatternSet; weighted=false)
     sample(pset.patterns) # TODO: weighted by frequency
@@ -61,8 +62,8 @@ function sampleresponse(pset::PatternSet, n=3; cut=2, kwargs...)
     dt = kwargs[:dt]
     
     # sample n patterns from the set
-    n = size(pset)
-    idx = rand(1:n)
+    l = size(pset)
+    idx = rand(1:l, n)
     patterns = pset.patterns[idx]
     
     # sample property realizations for each pattern
@@ -75,7 +76,6 @@ function sampleresponse(pset::PatternSet, n=3; cut=2, kwargs...)
     
     if cut > 0
         t = d2t(properties)
-     
         # indices to cut
         len = length(first(values(first(properties)))) # TODO: Add length to pattern object or find a better solution to this
         start = (cut-1)*len
