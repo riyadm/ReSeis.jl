@@ -5,18 +5,18 @@ struct EmpiricalPattern <: AbstractPattern
 end
 
 # return realization count
-realcount(pattern::EmpiricalPattern) = length(pattern.realizations)
+realcount(p::EmpiricalPattern) = length(p.realizations)
 
 # return realizations
-reals(pattern::EmpiricalPattern) = pattern.realizations
-reals(pattern::EmpiricalPattern, name::Symbol) = getindex.(reals(p), name)
+reals(p::EmpiricalPattern) = p.realizations
+reals(p::EmpiricalPattern, name::Symbol) = getindex.(reals(p), name)
 
 # sample from realizations
-sample(pattern::EmpiricalPattern) = sample(reals(pattern))
-sample(pattern::EmpiricalPattern, n::Int64) = sample(reals(patterns), n)
+sample(p::EmpiricalPattern) = sample(reals(p))
+sample(p::EmpiricalPattern, n::Int64) = sample(reals(p), n)
 
 # return base pattern labels
-labels(pattern::EmpiricalPattern) = pattern.labels
+labels(p::EmpiricalPattern) = p.labels
 
 # show methods
 function show(io::IO, p::EmpiricalPattern)
