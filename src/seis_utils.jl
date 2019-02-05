@@ -1,13 +1,13 @@
 function simkennet(lyr::Dict{Symbol,Vector{Float64}}; wavelet::Vector=[], dt::Float64=1e-3, 
-        propnames::Vector{Symbol}=[:rho, :vp, :dh], mopt::Int64=2, fs::Int64=0)
+        varnames::Vector{Symbol}=[:rho, :vp, :dh], mopt::Int64=2, fs::Int64=0)
     
-    @assert all(haskey(lyr, key) for key in propnames) "Property name not found."
+    @assert all(haskey(lyr, key) for key in varnames) "Property name not found."
     @assert wavelet != nothing "No wavelet provided."
     
     
-    ρ = lyr[:rho]
-    vₚ = lyr[:vp]
-    d = lyr[:dh]
+    ρ = lyr[varnames[1]]
+    vₚ = lyr[varnames[2]]
+    d = lyr[varnames[3]]
     
     nlr = length(ρ)
     n = length(wavelet)

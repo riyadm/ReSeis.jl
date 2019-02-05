@@ -17,10 +17,10 @@ function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64;
     sequences = Dict()
     
     for i in 1:s:size(data, 1)-w
-        labels = view(data[flagkey], i:i+w-1)
+        labels = data[flagkey][i:i+w-1]
         seq, counts = seqcounts(labels)
         
-        props = Dict(key => view(data[key], i:i+w-1) for key in propkeys)
+        props = Dict(key => data[key][i:i+w-1] for key in propkeys)
         props[:thickness] = δh * counts
         props[:dh] = δh * ones(w)
         
@@ -46,6 +46,7 @@ function patternset(data::DataFrame, gmm::GMM, w::Int64, s::Int64; kwargs...)
 end
 
 patterns(pset::PatternSet) = pset.patterns
+Base.size(pset::PatternSet) = length(pset.patterns)
 
 function sample(pset::PatternSet; weighted=false)
     sample(pset.patterns) # TODO: weighted by frequency
@@ -60,7 +61,9 @@ function sampleresponse(pset::PatternSet, n=3; cut=2, kwargs...)
     dt = kwargs[:dt]
     
     # sample n patterns from the set
-    patterns = sample(pset, n)
+    n = size(pset)
+    idx = rand(1:n)
+    patterns = pset.patterns[idx]
     
     # sample property realizations for each pattern
     properties = sample.(patterns)
@@ -78,11 +81,11 @@ function sampleresponse(pset::PatternSet, n=3; cut=2, kwargs...)
         start = (cut-1)*len
         stop = cut*len + 1 
         t_s = dt*(0:(length(s)-1))
-        idx = (t_s .>= t[start]) .& (t_s .<= t[stop])
-        response = s[idx]
-    else
-        s
-    end    
+        range = (t_s .>= t[start]) .& (t_s .<= t[stop])
+        s = s[range]
+    end
+    
+    s, idx
 end
 
 function seqcounts(labels::Vector)
