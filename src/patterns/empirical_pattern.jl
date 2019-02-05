@@ -1,26 +1,24 @@
 struct EmpiricalPattern <: AbstractPattern
-    labels::Vector{Real}
-    properties::Vector{Dict{Symbol, Vector{Float64}}}
+    labels::Vector{Int64}
+    realizations::Vector{Dict{Symbol, Vector{Float64}}}
     δh::Float64
 end
 
-realcount(pattern::EmpiricalPattern) = length(pattern.properties)
+# return realization count
+realcount(pattern::EmpiricalPattern) = length(pattern.realizations)
 
-function getreals(pattern::EmpiricalPattern, name::Symbol)
-    # extract all realizations of properties
-    reals = [vals[name] for vals in pattern.properties]
-end
+# return realizations
+reals(pattern::EmpiricalPattern) = pattern.realizations
+reals(pattern::EmpiricalPattern, name::Symbol) = getindex.(reals(p), name)
 
-function sample(pattern::EmpiricalPattern) 
-    sample(properties(pattern))
-end
+# sample from realizations
+sample(pattern::EmpiricalPattern) = sample(reals(pattern))
+sample(pattern::EmpiricalPattern, n::Int64) = sample(reals(patterns), n)
 
-sample(pattern::EmpiricalPattern, n::Int64) = [sample(pattern) for _=1:n]
-
+# return base pattern labels
 labels(pattern::EmpiricalPattern) = pattern.labels
 
-properties(pattern::EmpiricalPattern) = pattern.properties
-
+# show methods
 function show(io::IO, p::EmpiricalPattern)
     count = realcount(p)
     print(io, "EmpiricalPattern($count)")

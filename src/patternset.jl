@@ -17,10 +17,10 @@ function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64;
     sequences = Dict()
     
     for i in 1:s:size(data, 1)-w
-        labels = data[flagkey][i:i+w-1]
+        labels = view(data[flagkey], i:i+w-1)
         seq, counts = seqcounts(labels)
         
-        props = Dict(key => data[key][i:i+w-1] for key in propkeys)
+        props = Dict(key => view(data[key], i:i+w-1) for key in propkeys)
         props[:thickness] = δh * counts
         props[:dh] = δh * ones(w)
         
@@ -32,7 +32,6 @@ function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64;
     end
     
     patterns = [EmpiricalPattern(seq, props, δh) for (seq, props) in sequences]
-    @show typeof(patterns[1].properties)
     counts = realcount.(patterns)
     
     # sort patterns in descending order of realization counts
@@ -52,11 +51,13 @@ function sample(pset::PatternSet; weighted=false)
     sample(pset.patterns) # TODO: weighted by frequency
 end
 
-sample(pset::PatternSet, n::Int64) = [sample(pset) for _=1:n]
+sample(pset::PatternSet, n::Int64) = sample(pset.patterns, n)
 
 function sampleresponse(pset::PatternSet, n=3; cut=2, kwargs...)
     @assert 0 <= cut <= n "Pattern to cut doesn't exist."
     @assert in(:dt, keys(kwargs)) "Keyword argument dt missing."
+    
+    dt = kwargs[:dt]
     
     # sample n patterns from the set
     patterns = sample(pset, n)
@@ -71,12 +72,11 @@ function sampleresponse(pset::PatternSet, n=3; cut=2, kwargs...)
     
     if cut > 0
         t = d2t(properties)
-        
+     
         # indices to cut
         len = length(first(values(first(properties)))) # TODO: Add length to pattern object or find a better solution to this
         start = (cut-1)*len
-        stop = cut*len + 1
-        dt = kwargs[:dt]
+        stop = cut*len + 1 
         t_s = dt*(0:(length(s)-1))
         idx = (t_s .>= t[start]) .& (t_s .<= t[stop])
         response = s[idx]
@@ -87,8 +87,12 @@ end
 
 function seqcounts(labels::Vector)
     # find sequence boundaries
-    indices = findall(labels[1:end-1] .!= labels[2:end])
+    indices = findall(diff(labels) .!= 0)
+    
+    # get sequence of unique labels
     sequence = labels[indices]
+    
+    # get label counts
     push!(sequence, labels[end])
     pushfirst!(indices, 0)
     push!(indices, length(labels))
@@ -97,7 +101,7 @@ function seqcounts(labels::Vector)
     sequence, Int64.(counts)
 end
 
-function show(io::IO, p::PatternSet)
+function Base.show(io::IO, p::PatternSet)
     count = length(p.patterns)
     numclasses = length(p.distributions)
     print(io, "PatternSet($count, $numclasses)")

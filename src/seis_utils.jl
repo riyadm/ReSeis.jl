@@ -12,17 +12,17 @@ function simkennet(lyr::Dict{Symbol,Vector{Float64}}; wavelet::Vector=[], dt::Fl
     nlr = length(ρ)
     n = length(wavelet)
     
-    om = (2π/(n*dt))*(0:(n/2 - 1.)) |> collect
-    freq = om/(2π)
+    om = (2π/(n*dt)) .* (0:(n/2 - 1.)) |> collect
+    freq = om ./ (2π)
     
     p₀ = ifft(wavelet)
     w₀ = (1 ./ (ρ[1]*vₚ[1])) .* p₀
     rdhat = zeros(size(om))
     # tdhat = ones(size(om))
     
-    deno = ρ[2:end] .*vₚ[2:end] .+ ρ[1:end-1] .*vₚ[1:end-1]
+    deno = @. ρ[2:end]*vₚ[2:end]+ ρ[1:end-1]*vₚ[1:end-1]
     rd = .- diff(ρ.*vₚ) ./ deno
-    td = 2*sqrt.(ρ[2:end] .*vₚ[2:end] .*ρ[1:end-1] .*vₚ[1:end-1]) ./deno
+    td = @. 2*sqrt(ρ[2:end]*vₚ[2:end]*ρ[1:end-1]*vₚ[1:end-1])/deno
     
     if fs == 1
         pushfirst!(rd, -1)

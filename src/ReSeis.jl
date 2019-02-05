@@ -2,15 +2,21 @@ module ReSeis
 
 using Distributions
 using DataFrames
-using GaussianMixtures
 using FFTW
+using GaussianMixtures
+using RecipesBase
 
-import StatsBase: sample
-import Base: show      
+import StatsBase: sample     
 
-include("./seis_utils.jl")
-include("./patterns.jl")
-include("./patternset.jl")
+# patterns
+include("patterns.jl")
+include("patternset.jl")
+
+# seismic utilities
+include("seis_utils.jl")
+
+# plot recipes
+include("plotrecipes/patterns.jl")
 
 export 
     patternset,
