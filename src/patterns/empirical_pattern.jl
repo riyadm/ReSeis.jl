@@ -18,8 +18,18 @@ sample(p::EmpiricalPattern, n::Int64) = sample(reals(p), n)
 # return base pattern labels
 labels(p::EmpiricalPattern) = p.labels
 
+# variable names
+Base.names(p::EmpiricalPattern) = collect(keys(first(reals(p))))
+
 # show methods
-function show(io::IO, p::EmpiricalPattern)
-    count = realcount(p)
-    print(io, "EmpiricalPattern($count)")
+function Base.show(io::IO, p::EmpiricalPattern)
+    print(io, "EmpiricalPattern($(join(labels(p),"-")))")
 end
+
+function Base.show(io::IO, ::MIME"text/plain", p::EmpiricalPattern)
+    println(io, p)
+    println(io, "  Sampling rate Δh:  ", p.δh)
+    println(io, "  Variables:         ", join(names(p), ", "))
+    println(io, "  Realization count: ", realcount(p)) 
+end
+
