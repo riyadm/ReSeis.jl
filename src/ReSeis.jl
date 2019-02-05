@@ -12,6 +12,15 @@ import StatsBase: sample
 include("patterns.jl")
 include("patternset.jl")
 
+# simulators
+include("simulators.jl")
+
+# solvers
+include("solvers.jl")
+
+# problems
+include("problems.jl")
+
 # seismic utilities
 include("seis_utils.jl")
 

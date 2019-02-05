@@ -7,7 +7,7 @@ struct Kennet <: AbstractSimulator
 end
 
 function Kennet(;wavelet::Vector{Float64}=[], dt::Float64=1e-3, 
-        mopt::Int=2, fs::Int=0, varnames::Vector{Symbol}=[:rho, :vp, :dh)
+        mopt::Int=2, fs::Int=0, varnames::Vector{Symbol}=[:rho, :vp, :dh])
     @assert !isempty(wavelet) "No wavelet provided."
     @assert dt > 0 "Sampling rate dt must be positive."
     @assert mopt >= 0 "Multiple order mopt must be non-negative."
