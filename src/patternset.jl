@@ -40,14 +40,12 @@ function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64;
     PatternSet(patterns, distributions)
 end
 
-function patternset(data::DataFrame, gmm::GMM, w::Int64, s::Int64; kwargs...)
-        distributions = [MvNormal(means(gmm)[i,:], covars(gmm)[i]) for i=1:gmm.n]
-        patternset(data, distributions, w, s; kwargs...)
-end
-
 patterns(pset::PatternSet) = pset.patterns
 Base.size(pset::PatternSet) = length(pset.patterns)
-Base.getindex(pset::PatternSet, i::Int64) = getindex(pset.patterns, i)
+Base.getindex(pset::PatternSet, i) = getindex(pset.patterns, i)
+Base.iterate(pset::PatternSet) = iterate(pset.patterns)
+Base.lastindex(pset::PatternSet) = lastindex(pset.patterns)
+
 
 function sample(pset::PatternSet; weighted=false)
     sample(pset.patterns) # TODO: weighted by frequency
@@ -55,38 +53,6 @@ end
 
 sample(pset::PatternSet, n::Int64) = sample(pset.patterns, n)
 
-function sampleresponse(pset::PatternSet, n=3; cut=2, kwargs...)
-    @assert 0 <= cut <= n "Pattern to cut doesn't exist."
-    @assert in(:dt, keys(kwargs)) "Keyword argument dt missing."
-    
-    dt = kwargs[:dt]
-    
-    # sample n patterns from the set
-    l = size(pset)
-    idx = rand(1:l, n)
-    patterns = pset.patterns[idx]
-    
-    # sample property realizations for each pattern
-    properties = sample.(patterns)
-    
-    @show mean([mean(p[:vp]) for p in properties])
-    @show mean(properties[cut][:vp])
-    # compute synthetic seismogram
-    s = synthetic(properties; kwargs...)
-    
-    if cut > 0
-        t = d2t(properties)
-        # indices to cut
-        len = length(first(values(first(properties)))) # TODO: Add length to pattern object or find a better solution to this
-        start = (cut-1)*len
-        stop = cut*len + 1 
-        t_s = dt*(0:(length(s)-1))
-        range = (t_s .>= t[start]) .& (t_s .<= t[stop])
-        s = s[range]
-    end
-    
-    s, idx
-end
 
 function seqcounts(labels::Vector)
     # find sequence boundaries

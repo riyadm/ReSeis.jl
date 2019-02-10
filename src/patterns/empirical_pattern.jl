@@ -21,6 +21,25 @@ labels(p::EmpiricalPattern) = p.labels
 # variable names
 Base.names(p::EmpiricalPattern) = collect(keys(first(reals(p))))
 
+# stack multiple patterns in a single layer
+function stack(ps::Vector{<:AbstractPattern})
+    # sample single realization for every pattern
+    reals = sample.(ps)
+    
+    # stack layers into a single layer
+    stack(reals)
+end
+
+function stack(lyr::Vector{Dict{Symbol,Vector{Float64}}})
+    stacked = eltype(lyr)()
+    
+    for key in keys(first(lyr))
+        properties = getindex.(lyr, key)
+        stacked[key] = vcat(properties...)
+    end
+    stacked
+end
+
 # show methods
 function Base.show(io::IO, p::EmpiricalPattern)
     print(io, "EmpiricalPattern($(join(labels(p),"-")))")

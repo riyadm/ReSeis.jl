@@ -3,7 +3,6 @@ module ReSeis
 using Distributions
 using DataFrames
 using FFTW
-using GaussianMixtures
 using RecipesBase
 
 import StatsBase: sample     
@@ -37,7 +36,5 @@ export
     # seismic related
     Kennet,
     ricker,
-    synthetic,
-    sampleresponse,
     d2t    
 end
