@@ -27,4 +27,20 @@ function d2t(lyr::Vector{Dict{Symbol,Vector{Float64}}})
     stacked = stack(lyr)
     d2t(stacked)
 end
+
+function seqcounts(labels::Vector)
+    # find sequence boundaries
+    indices = findall(diff(labels) .!= 0)
+    
+    # get sequence of unique labels
+    sequence = labels[indices]
+    
+    # get label counts
+    push!(sequence, labels[end])
+    pushfirst!(indices, 0)
+    push!(indices, length(labels))
+    counts = diff(indices)
+    
+    sequence, Int64.(counts)
+end
         

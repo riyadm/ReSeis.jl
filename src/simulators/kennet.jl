@@ -41,7 +41,7 @@ function (sim::Kennet)(pset::PatternSet; mask::Vector{Int}=[0, 0, 0], cut::Int=2
     0 <= cut <= n || error("Attempt to cut $n-element stack at index $cut")
     
     # sample n patterns from the set
-    idx = map(x -> x == 0 ? rand(1:size(pset)) : x, mask)
+    idx = map(x -> x == 0 ? rand(1:length(pset)) : x, mask)
     patterns = pset.patterns[idx]
     
     # compute synthetic seismogram
