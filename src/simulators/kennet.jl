@@ -121,12 +121,14 @@ function simkennet(lyr::Dict{Symbol,Vector{Float64}}, wavelet::Vector{Float64}, 
 end
 
 function Base.show(io::IO, sim::Kennet)
-    print(io, "Kennet($sim.varnames)")
+    variables = join(sim.varnames, ", ")
+    print(io, "Kennet($variables)")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", sim::Kennet)
-    println(io, "  Sampling rate Δt:  ", sim.dt, " s")
+    println(io, "Kennet")
     println(io, "  Variables:         ", sim.varnames)
+    println(io, "  Sampling rate Δt:  ", sim.dt, " s")
     println(io, "  Multiples order:   ", sim.mopt) 
     println(io, "  Wavelet length:    ", length(sim.wavelet), " points")
 end

@@ -19,6 +19,7 @@ function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64;
     for i in 1:s:size(data, 1)-w
         labels = data[flagkey][i:i+w-1]     
         props = Dict(key => data[key][i:i+w-1] for key in propkeys)
+        props[:dh] = δh * ones(w)
         
         if condense
             seq, counts = seqcounts(labels)
@@ -26,8 +27,6 @@ function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64;
         else
             seq = labels
         end
-        
-        props[:dh] = δh * ones(w)
         
         if seq in keys(sequences)
             push!(sequences[seq], props)

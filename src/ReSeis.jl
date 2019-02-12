@@ -24,12 +24,15 @@ include("problems.jl")
 include("seis_utils.jl")
 
 # plot recipes
-include("plotrecipes/patterns.jl")
+include("plotrecipes/empirical_pattern.jl")
 
 export 
+    # pattern set
     patternset,
     sample,
-    getreals,
+    
+    # empirical pattern
+    reals,
     realcount,
     labels,
 
