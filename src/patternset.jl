@@ -1,14 +1,12 @@
-struct PatternSet
-    patterns::Vector{EmpiricalPattern}
-    distributions::Vector{Distribution}
+struct PatternSet{T<:AbstractPattern}
+    patterns::Vector{T}
 end
 
-function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64; 
+function patternset(data::DataFrame, w::Int64, s::Int64; 
         flagkey=:facies, propkeys=[:rho, :vp], condense=false)
     
-    @assert all(.!isnan.(convert(Matrix, data[propkeys]))) "NaN values present in properties."
-    @assert flagkey in names(data) "Flag not found."
-    @assert maximum(data[flagkey]) == length(distributions) "Number of distributions should match the number of classes."
+    @assert all(.!isnan.(convert(Matrix, data[propkeys]))) "NaNs are not allowed"
+    @assert flagkey in names(data) "flag key not found"
     
     # depth sampling rate
     δh = data[:depth][2]-data[:depth][1]
@@ -41,7 +39,7 @@ function patternset(data::DataFrame, distributions::Vector, w::Int64, s::Int64;
     # sort patterns in descending order of realization counts
     permute!(patterns, sortperm(counts, rev=true))
         
-    PatternSet(patterns, distributions)
+    PatternSet(patterns)
 end
 
 patterns(pset::PatternSet) = pset.patterns
@@ -59,6 +57,6 @@ sample(pset::PatternSet, n::Int64) = sample(pset.patterns, n)
 
 function Base.show(io::IO, p::PatternSet)
     count = length(p.patterns)
-    numclasses = length(p.distributions)
-    print(io, "PatternSet($count, $numclasses)")
+    # numclasses = length(p.distributions)
+    print(io, "PatternSet{$(eltype(p.patterns))}($count)")
 end

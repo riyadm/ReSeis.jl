@@ -35,6 +35,7 @@ export
     reals,
     realcount,
     labels,
+    stack,
 
     # seismic related
     Kennet,
