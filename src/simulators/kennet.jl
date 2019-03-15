@@ -15,18 +15,24 @@ function Kennet(;wavelet::Vector{Float64}=[], dt::Float64=1e-3,
     Kennet(wavelet, dt, mopt, fs, varnames)
 end
 
-(sim::Kennet)(lyr::Dict{Symbol,Vector{Float64}}) = simkennet(lyr, sim.wavelet, sim.dt, sim.mopt, sim.fs, sim.varnames)
-(sim::Kennet)(p::AbstractPattern) = sim(sample(p))
-(sim::Kennet)(ps::Vector{<:AbstractPattern}, cut::Int=0) = sim(sample.(ps), cut)
 
-function (sim::Kennet)(lyr::Vector{Dict{Symbol,Vector{Float64}}}, cut::Int=0) 
+function (sim::Kennet)(lyr::Dict{Symbol,Vector{Float64}})
+    ρ, vₚ, d = (lyr[key] for key in sim.varnames)
+    simkennet(ρ, vₚ, d, sim.wavelet, sim.dt, sim.mopt, sim.fs)
+end
+
+(sim::Kennet)(p::AbstractPattern) = sim(sample(p))
+(sim::Kennet)(ps::Vector{<:AbstractPattern}, cut::UnitRange{Int}=1:length(ps)) = sim(sample.(ps), cut)
+
+function (sim::Kennet)(lyr::Vector{Dict{Symbol,Vector{Float64}}}, cut::UnitRange{Int}=1:length(lyr)) 
     s = sim(stack(lyr))
 
-    if cut > 0
+    if first(cut) > 0
         t = d2t(lyr)
         len = length(first(values(first(lyr))))
-        start = (cut - 1) * len
-        stop = cut * len + 1 
+        start = (first(cut) - 1) * len + 1
+        stop = last(cut) * len
+        # @show t[start], t[stop]
         t_s = sim.dt * (0:(length(s) - 1))
         range = (t_s .>= t[start]) .& (t_s .<= t[stop])
         s = s[range]
@@ -36,9 +42,9 @@ function (sim::Kennet)(lyr::Vector{Dict{Symbol,Vector{Float64}}}, cut::Int=0)
 end
 
 
-function (sim::Kennet)(pset::PatternSet; mask::Vector{Int}=[0, 0, 0], cut::Int=2)
+function (sim::Kennet)(pset::PatternSet; mask::Vector{Int}=[0, 0, 0], cut::UnitRange{Int}=1:length(mask))
     n = length(mask)
-    0 <= cut <= n || error("Attempt to cut $n-element stack at index $cut")
+    0 <= first(cut) <= last(cut) <= n || error("Attempt to cut $n-element stack at index $cut")
     
     # sample n patterns from the set
     idx = map(x -> x == 0 ? rand(1:length(pset)) : x, mask)
@@ -50,17 +56,16 @@ function (sim::Kennet)(pset::PatternSet; mask::Vector{Int}=[0, 0, 0], cut::Int=2
     s
 end
 
-function simkennet(lyr::Dict{Symbol,Vector{Float64}}, wavelet::Vector{Float64}, dt::Float64=1e-3, mopt::Int64=2, fs::Int64=0, 
-        varnames::Vector{Symbol}=[:rho, :vp, :dh])
+
+function (sim::Kennet)(pset::PatternSet, masks::Vector{Vector{Int}}, cut::UnitRange{Int}=1:length(first(masks)))
+    nworkers() == 1 && (return [sim(pset, mask, cut) for mask in masks])
+    println("starting simulation on $(nworkers()) workers")
     
-    @assert all(haskey(lyr, key) for key in varnames) "Property name not found."
-    @assert wavelet != nothing "No wavelet provided."
-    
-    
-    ρ = lyr[varnames[1]]
-    vₚ = lyr[varnames[2]]
-    d = lyr[varnames[3]]
-    
+    f = mask -> sim(pset, mask, cut)
+    return pmap(f, masks)
+end
+        
+function simkennet(ρ::Vector{T}, vₚ::Vector{T}, d::Vector{T}, wavelet::Vector{T}, dt::T=1e-3, mopt::Int64=2, fs::Int64=0) where {T<:Real}  
     nlr = length(ρ)
     n = length(wavelet)
     
@@ -93,18 +98,18 @@ function simkennet(lyr::Dict{Symbol,Vector{Float64}}, wavelet::Vector{Float64}, 
         if mopt == 0
             reverb = ones(size(om))
         elseif mopt == 1
-            reverb = 1 .+ ru[j] .*ed .*rdhat .*ed
+            reverb = 1. .+ ru[j] .*ed .*rdhat .*ed
         else
-            reverb = 1 ./(1 .- ru[j] .*ed .*rdhat .*ed)
+            reverb = 1. ./ (1. .- ru[j] .*ed .*rdhat .*ed)
         end
         
         rdhat = rd[j] .+ td[j] .*ed .*rdhat .*ed .*reverb .*td[j]
         #tdhat = tdhat .*ed .*reverb .*td[j]
         
         if mopt == 1
-            dx=findall(real(rdhat) .> 1); rdhat[dx] = 1 + im*imag(rdhat[dx]);
-            dx=findall(imag(rdhat) .> 1); rdhat[dx] = real(rdhat[dx]) + im;
-            # dx=findall(real(tdhat) .> 1); tdhat[dx] = 1 + im*imag(tdhat[dx]);
+            dx=findall(real(rdhat) .> 1.); rdhat[dx] = 1. .+ im*imag(rdhat[dx]);
+            dx=findall(imag(rdhat) .> 1.); rdhat[dx] = real(rdhat[dx]) .+ 1.0im;
+            # dx=findall(real(tdhat) .> 1); tdhat[dx] = 1. + im*imag(tdhat[dx]);
             # dx=findall(imag(tdhat) .> 1); tdhat[dx] = real(tdhat[dx]) + im;
         end
     end

@@ -4,6 +4,7 @@ using Distributions
 using DataFrames
 using FFTW
 using RecipesBase
+using Distributed
 
 import StatsBase: sample     
 
